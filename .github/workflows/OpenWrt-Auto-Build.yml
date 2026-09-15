@@ -3,6 +3,9 @@ name: OpenWrt-Auto-Build
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -103,9 +106,15 @@ jobs:
         run: |
           make -j$(nproc)
 
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Upload firmware to Release
+        uses: softprops/action-gh-release@v2
+        if: success()
         with:
-          name: openwrt
-          path: |
-            openwrt/bin/targets/rockchip/armv8/*
+          tag_name: daed-build-${{ github.run_number }}
+          name: DAED OpenWrt Build ${{ github.run_number }}
+          files: |
+            openwrt/bin/targets/rockchip/armv8/*.gz
+            openwrt/bin/targets/rockchip/armv8/sha256sums
+          generate_release_notes: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
