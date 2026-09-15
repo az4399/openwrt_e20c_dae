@@ -52,7 +52,7 @@ jobs:
         working-directory: openwrt
         run: |
           # 使用仓库根目录的 .config
-          cp ../.config .config
+          cp "$GITHUB_WORKSPACE/.config" .config
 
           # 设置时区为 Asia/Shanghai
           sed -i "s/set system.@system\['-1'\]\.timezone='UTC'/set system.@system['-1'].timezone='CST-8'/g" \
