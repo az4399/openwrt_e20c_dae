@@ -51,6 +51,31 @@ jobs:
           ./scripts/feeds update -a
           ./scripts/feeds install -a
 
+      - name: Replace dae and LuCI packages
+        working-directory: openwrt
+        run: |
+          set -eu
+
+          # 拉取已在本地验证过的包仓库，保留 Linux 符号链接及文件权限
+          DAE_PACKAGE_DIR="$RUNNER_TEMP/dae-packages"
+          git clone --depth 1 --branch main \
+            https://github.com/az4399/luci-app-dae.git "$DAE_PACKAGE_DIR"
+
+          # 确认两个包完整存在后，再替换 feeds 安装的包入口
+          test -f "$DAE_PACKAGE_DIR/dae/Makefile"
+          test -f "$DAE_PACKAGE_DIR/luci-app-dae/Makefile"
+
+          rm -rf package/feeds/smpackage/dae
+          rm -rf package/feeds/smpackage/luci-app-dae
+          cp -a "$DAE_PACKAGE_DIR/dae" package/feeds/smpackage/dae
+          cp -a "$DAE_PACKAGE_DIR/luci-app-dae" package/feeds/smpackage/luci-app-dae
+
+          # 输出实际使用的提交、dae 版本、源码地址及 LuCI 依赖，便于核对
+          git -C "$DAE_PACKAGE_DIR" log -1 --format='%H %s'
+          grep -E '^(PKG_VERSION|PKG_SOURCE_URL|PKG_SOURCE_URL_FILE|PKG_HASH):=' \
+            package/feeds/smpackage/dae/Makefile
+          grep '^LUCI_DEPENDS:=' package/feeds/smpackage/luci-app-dae/Makefile
+
       - name: Configure OpenWrt
         working-directory: openwrt
         run: |
